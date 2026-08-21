@@ -1,0 +1,48 @@
+:root {
+  --bg: #0B0B0A; --panel: #0E0E0C; --line: #1B1A17; --hover: #171613; --line2: #26241F;
+  --fg: #ECE7DD; --fgs: #F3EFE6; --dim: #9A9488; --dim2: #7C766A; --faint: #5E594F; --faint2: #3A3730;
+  --track: #141310; --accent: #B4552D; --ink: #120D08; --ok: #7C9A54; --r: 9px;
+  --fd: Newsreader, Georgia, serif; --fu: "IBM Plex Sans", system-ui, sans-serif; --fm: "IBM Plex Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+}
+
+body {
+  font-family: var(--fu);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+  transition: background .2s, color .2s;
+}
+
+#root { min-height: 100vh; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+input, textarea, button { font: inherit; color: inherit; }
+input:focus, textarea:focus { outline: none; }
+button { cursor: pointer; }
+
+::placeholder { color: var(--faint); }
+::selection { background: rgba(180, 85, 45, .3); }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+.nav-btn:hover { background: var(--hover); color: var(--fgs); }
+.theme-row:hover { background: var(--hover); }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-outline:hover { color: var(--fgs); }
+.btn-text:hover { color: var(--fgs); }
+.btn-delete:hover { color: var(--accent); }
+.btn-focus-inline:hover { border-color: var(--accent); color: var(--fgs); }
+.icon-btn:hover { color: var(--fgs); }
+.task-row-compact:hover, .task-row-full:hover { background: var(--hover); }
+.day-cell:hover { border-color: var(--line2); }

@@ -1,0 +1,5 @@
+node_modules/
+dist/
+server/quietdesk.db
+server/quietdesk.db-*
+*.log
