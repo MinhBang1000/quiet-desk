@@ -34,18 +34,31 @@ export interface PortfolioLink {
   url: string
 }
 
-export interface PortfolioProject {
+/** One CV-style block: a job, degree, award, project, publication, etc. */
+export interface PortfolioEntry {
+  heading: string
+  subheading?: string
+  meta?: string // e.g. dates / location
+  bullets: string[]
+  url?: string
+}
+
+/** A named, reorderable group of entries — the unit sections are added/removed by. */
+export interface PortfolioSection {
+  id: string
   title: string
-  description: string
-  url: string
+  entries: PortfolioEntry[]
 }
 
 export interface Portfolio {
   displayName: string
   headline: string
   bio: string
+  avatarUrl: string
+  gallery: string[]
   links: PortfolioLink[]
-  projects: PortfolioProject[]
+  sections: PortfolioSection[]
+  theme: string
   shareEnabled: boolean
   shareToken: string
 }
@@ -54,8 +67,11 @@ export interface PublicPortfolio {
   displayName: string
   headline: string
   bio: string
+  avatarUrl: string
+  gallery: string[]
   links: PortfolioLink[]
-  projects: PortfolioProject[]
+  sections: PortfolioSection[]
+  theme: string
   sessions: { startedAt: string; minutes: number }[]
 }
 

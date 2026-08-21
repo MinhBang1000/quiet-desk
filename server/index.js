@@ -9,7 +9,10 @@ const auth = require('./auth');
 
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
+// Raised from the 100kb default: portfolio avatar/gallery images travel as
+// base64 data URLs in the JSON body (resized client-side, but base64 still
+// adds ~33% overhead on top of a handful of sub-1MB images).
+app.use(express.json({ limit: '20mb' }));
 app.use(cookieParser());
 
 const PORT = process.env.PORT || 4001;
@@ -72,8 +75,11 @@ app.get('/api/public/portfolio/:token', (req, res) => {
     displayName: row.displayName,
     headline: row.headline,
     bio: row.bio,
+    avatarUrl: row.avatarUrl,
+    gallery: JSON.parse(row.gallery),
     links: JSON.parse(row.links),
-    projects: JSON.parse(row.projects),
+    sections: JSON.parse(row.sections),
+    theme: row.theme,
     sessions,
   });
 });
@@ -239,18 +245,21 @@ app.get('/api/portfolio', (req, res) => {
 
 app.put('/api/portfolio', (req, res) => {
   const existing = db.prepare('SELECT * FROM portfolio WHERE id = 1').get();
-  const { displayName, headline, bio, links, projects, shareEnabled } = req.body || {};
+  const { displayName, headline, bio, avatarUrl, gallery, links, sections, theme, shareEnabled } = req.body || {};
   const next = {
     displayName: displayName !== undefined ? displayName : existing.displayName,
     headline: headline !== undefined ? headline : existing.headline,
     bio: bio !== undefined ? bio : existing.bio,
+    avatarUrl: avatarUrl !== undefined ? avatarUrl : existing.avatarUrl,
+    gallery: gallery !== undefined ? JSON.stringify(gallery) : existing.gallery,
     links: links !== undefined ? JSON.stringify(links) : existing.links,
-    projects: projects !== undefined ? JSON.stringify(projects) : existing.projects,
+    sections: sections !== undefined ? JSON.stringify(sections) : existing.sections,
+    theme: theme !== undefined ? theme : existing.theme,
     shareEnabled: shareEnabled !== undefined ? (shareEnabled ? 1 : 0) : existing.shareEnabled,
   };
   db.prepare(
-    'UPDATE portfolio SET displayName = ?, headline = ?, bio = ?, links = ?, projects = ?, shareEnabled = ? WHERE id = 1'
-  ).run(next.displayName, next.headline, next.bio, next.links, next.projects, next.shareEnabled);
+    'UPDATE portfolio SET displayName = ?, headline = ?, bio = ?, avatarUrl = ?, gallery = ?, links = ?, sections = ?, theme = ?, shareEnabled = ? WHERE id = 1'
+  ).run(next.displayName, next.headline, next.bio, next.avatarUrl, next.gallery, next.links, next.sections, next.theme, next.shareEnabled);
   const row = db.prepare('SELECT * FROM portfolio WHERE id = 1').get();
   res.json(portfolioOut(row));
 });
@@ -313,13 +322,16 @@ app.post('/api/import', (req, res) => {
     }
     if (portfolio) {
       db.prepare(
-        'UPDATE portfolio SET displayName = ?, headline = ?, bio = ?, links = ?, projects = ?, shareToken = ?, shareEnabled = ? WHERE id = 1'
+        'UPDATE portfolio SET displayName = ?, headline = ?, bio = ?, avatarUrl = ?, gallery = ?, links = ?, sections = ?, theme = ?, shareToken = ?, shareEnabled = ? WHERE id = 1'
       ).run(
         portfolio.displayName ?? '',
         portfolio.headline ?? '',
         portfolio.bio ?? '',
+        portfolio.avatarUrl ?? '',
+        JSON.stringify(portfolio.gallery ?? []),
         JSON.stringify(portfolio.links ?? []),
-        JSON.stringify(portfolio.projects ?? []),
+        JSON.stringify(portfolio.sections ?? []),
+        portfolio.theme || 'night',
         portfolio.shareToken || crypto.randomBytes(16).toString('hex'),
         portfolio.shareEnabled ? 1 : 0
       );
@@ -348,8 +360,11 @@ function portfolioOut(row) {
     displayName: row.displayName,
     headline: row.headline,
     bio: row.bio,
+    avatarUrl: row.avatarUrl,
+    gallery: JSON.parse(row.gallery),
     links: JSON.parse(row.links),
-    projects: JSON.parse(row.projects),
+    sections: JSON.parse(row.sections),
+    theme: row.theme,
     shareEnabled: !!row.shareEnabled,
     shareToken: row.shareToken,
   };

@@ -1,10 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
-import { THEME_ORDER, THEMES } from '../lib/themes'
+import { THEME_ORDER, THEMES, type ThemeId } from '../lib/themes'
 import { useStore } from '../store/useStore'
 
-export function ThemePicker() {
-  const theme = useStore((s) => s.theme)
-  const setTheme = useStore((s) => s.setTheme)
+interface ThemePickerProps {
+  // Uncontrolled (default): reads/writes the app's own theme via the store,
+  // used in the Sidebar. Controlled: pass value/onChange to pick a theme
+  // for something else (the portfolio) without touching the app's theme.
+  value?: ThemeId
+  onChange?: (id: ThemeId) => void
+  openDirection?: 'up' | 'down'
+}
+
+export function ThemePicker({ value, onChange, openDirection = 'up' }: ThemePickerProps) {
+  const storeTheme = useStore((s) => s.theme)
+  const setStoreTheme = useStore((s) => s.setTheme)
+  const theme = value ?? storeTheme
+  const setTheme = onChange ?? setStoreTheme
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const current = THEMES[theme]
@@ -65,7 +76,7 @@ export function ThemePicker() {
         <div
           style={{
             position: 'absolute',
-            bottom: 'calc(100% + 6px)',
+            ...(openDirection === 'up' ? { bottom: 'calc(100% + 6px)' } : { top: 'calc(100% + 6px)' }),
             left: 0,
             right: 0,
             zIndex: 30,

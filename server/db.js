@@ -68,6 +68,24 @@ if (tagCount === 0) {
   ['Deep work', 'Study', 'Writing', 'Admin'].forEach((name, i) => insertTag.run(name, i, now));
 }
 
+// Additive migration: the portfolio table originally shipped with a fixed
+// `projects` column. Sections superseded it with a flexible model, so new
+// columns are added here via ALTER TABLE rather than touching the CREATE
+// TABLE above, which would no-op against an already-existing table.
+const portfolioColumns = db.prepare('PRAGMA table_info(portfolio)').all().map((c) => c.name);
+if (!portfolioColumns.includes('avatarUrl')) {
+  db.exec("ALTER TABLE portfolio ADD COLUMN avatarUrl TEXT NOT NULL DEFAULT ''");
+}
+if (!portfolioColumns.includes('gallery')) {
+  db.exec("ALTER TABLE portfolio ADD COLUMN gallery TEXT NOT NULL DEFAULT '[]'");
+}
+if (!portfolioColumns.includes('sections')) {
+  db.exec("ALTER TABLE portfolio ADD COLUMN sections TEXT NOT NULL DEFAULT '[]'");
+}
+if (!portfolioColumns.includes('theme')) {
+  db.exec("ALTER TABLE portfolio ADD COLUMN theme TEXT NOT NULL DEFAULT 'night'");
+}
+
 const portfolioRow = db.prepare('SELECT * FROM portfolio WHERE id = 1').get();
 if (!portfolioRow) {
   const shareToken = crypto.randomBytes(16).toString('hex');
