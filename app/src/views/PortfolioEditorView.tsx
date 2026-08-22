@@ -1,111 +1,17 @@
-import { useEffect, useRef, useState } from 'react'
-import { AvatarCropModal } from '../components/AvatarCropModal'
+import { useRef, useState } from 'react'
+import { Field, IconButton } from '../components/FormKit'
+import { PhotoPicker } from '../components/PhotoPicker'
 import { ThemePicker } from '../components/ThemePicker'
+import { Toast } from '../components/Toast'
 import { useHistory } from '../hooks/useHistory'
 import { BP_MOBILE, BP_NARROW, useMediaQuery } from '../hooks/useMediaQuery'
 import { copyToClipboard } from '../lib/clipboard'
 import { computeKpis, computeStreak } from '../lib/derived'
-import { fileToResizedDataUrl, initialsAvatar } from '../lib/image'
+import { inputStyle, sectionHeader } from '../lib/formKit'
+import { fileToResizedDataUrl } from '../lib/image'
 import { THEMES, type ThemeId } from '../lib/themes'
 import { useStore } from '../store/useStore'
 import type { Portfolio, PortfolioEntry, PortfolioLink, PortfolioSection } from '../types'
-
-function sectionHeader(label: string) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <span style={{ fontFamily: 'var(--fm)', fontSize: 9.5, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--faint)' }}>
-        {label}
-      </span>
-      <span style={{ flex: 1, height: 1, background: 'var(--line)' }} />
-    </div>
-  )
-}
-
-const inputStyle = {
-  width: '100%',
-  border: '1px solid var(--line2)',
-  borderRadius: 'calc(var(--r) - 2px)',
-  background: 'var(--bg)',
-  padding: '10px 12px',
-  fontSize: 14.5,
-  color: 'var(--fg)',
-  fontFamily: 'inherit',
-} as const
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <span style={{ fontSize: 11.5, color: 'var(--dim2)' }}>{label}</span>
-      {children}
-    </label>
-  )
-}
-
-function IconButton({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) {
-  return (
-    <button
-      onClick={onClick}
-      title={title}
-      style={{ flex: 'none', padding: '4px 7px', border: 0, background: 'transparent', color: 'var(--faint2)', fontSize: 13 }}
-    >
-      {children}
-    </button>
-  )
-}
-
-function AvatarPicker({ avatarUrl, displayName, onChange }: { avatarUrl: string; displayName: string; onChange: (url: string) => void }) {
-  const theme = useStore((s) => THEMES[s.theme])
-  const fileRef = useRef<HTMLInputElement>(null)
-  const [pendingFile, setPendingFile] = useState<File | null>(null)
-  const src = avatarUrl || initialsAvatar(displayName || 'You', theme.accent, theme.ink)
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-      <button
-        onClick={() => fileRef.current?.click()}
-        style={{ padding: 0, border: `1px solid var(--line2)`, borderRadius: '50%', background: 'transparent', cursor: 'pointer', flex: 'none' }}
-        title="Change photo"
-      >
-        <img src={src} alt="Avatar" style={{ width: 128, height: 128, borderRadius: '50%', objectFit: 'cover', display: 'block' }} />
-      </button>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <button
-          onClick={() => fileRef.current?.click()}
-          className="btn-outline"
-          style={{ padding: '8px 14px', border: '1px solid var(--line2)', borderRadius: 'calc(var(--r) - 2px)', background: 'transparent', color: 'var(--dim)', fontSize: 13, alignSelf: 'flex-start' }}
-        >
-          Upload photo
-        </button>
-        {avatarUrl && (
-          <button onClick={() => onChange('')} className="btn-text" style={{ padding: 0, border: 0, background: 'transparent', color: 'var(--faint)', fontSize: 12, alignSelf: 'flex-start' }}>
-            Remove — use initials
-          </button>
-        )}
-      </div>
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/*"
-        style={{ display: 'none' }}
-        onChange={(e) => {
-          const file = e.target.files?.[0]
-          e.target.value = ''
-          if (file) setPendingFile(file)
-        }}
-      />
-      {pendingFile && (
-        <AvatarCropModal
-          file={pendingFile}
-          onCancel={() => setPendingFile(null)}
-          onConfirm={(dataUrl) => {
-            onChange(dataUrl)
-            setPendingFile(null)
-          }}
-        />
-      )}
-    </div>
-  )
-}
 
 function GalleryEditor({ gallery, onChange }: { gallery: string[]; onChange: (g: string[]) => void }) {
   const fileRef = useRef<HTMLInputElement>(null)
@@ -296,35 +202,6 @@ function SectionEditor({
   )
 }
 
-function Toast({ message, onDone }: { message: string; onDone: () => void }) {
-  useEffect(() => {
-    const id = setTimeout(onDone, 2400)
-    return () => clearTimeout(id)
-  }, [onDone])
-
-  return (
-    <div
-      role="status"
-      style={{
-        position: 'fixed',
-        left: '50%',
-        bottom: 28,
-        transform: 'translateX(-50%)',
-        zIndex: 200,
-        padding: '11px 18px',
-        borderRadius: 'var(--r)',
-        border: '1px solid var(--line2)',
-        background: 'var(--panel)',
-        color: 'var(--fgs)',
-        fontSize: 13,
-        boxShadow: '0 12px 32px rgba(0,0,0,.35)',
-      }}
-    >
-      {message}
-    </div>
-  )
-}
-
 export function PortfolioEditorView() {
   const portfolio = useStore((s) => s.portfolio)
   if (!portfolio) return null
@@ -410,7 +287,7 @@ function PortfolioForm({ portfolio }: { portfolio: Portfolio }) {
 
       <section style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {sectionHeader('Profile')}
-        <AvatarPicker avatarUrl={avatarUrl} displayName={displayName} onChange={setAvatarUrl} />
+        <PhotoPicker photoUrl={avatarUrl} fallbackName={displayName} onChange={setAvatarUrl} />
         <Field label="Display name">
           <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} style={inputStyle} />
         </Field>

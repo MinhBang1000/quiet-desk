@@ -6,21 +6,37 @@ import { computeStreak, dayStats } from '../lib/derived'
 import { iso } from '../lib/date'
 import { useStore } from '../store/useStore'
 import type { View } from '../types'
-import { RemindersToggle } from './RemindersToggle'
-import { TagManager } from './TagManager'
-import { ThemePicker } from './ThemePicker'
-import { TimerSettings } from './TimerSettings'
 
 function pad(n: number) {
   return String(n).padStart(2, '0')
 }
 
-const NAV: { id: View; label: string }[] = [
+const WORK_ITEMS: { id: View; label: string }[] = [
   { id: 'focus', label: 'Focus' },
   { id: 'today', label: 'Today' },
   { id: 'calendar', label: 'Calendar' },
   { id: 'stats', label: 'Progress' },
-  { id: 'portfolio', label: 'Portfolio' },
+]
+
+const NAV_GROUPS: { label: string; items: { id: View; label: string }[] }[] = [
+  { label: 'Work', items: WORK_ITEMS },
+  {
+    label: 'Life',
+    items: [
+      { id: 'people', label: 'People' },
+      { id: 'things', label: 'Things' },
+      { id: 'places', label: 'Places' },
+      { id: 'lists', label: 'Lists' },
+      { id: 'assets', label: 'Assets' },
+    ],
+  },
+  {
+    label: 'Personal',
+    items: [
+      { id: 'portfolio', label: 'Portfolio' },
+      { id: 'settings', label: 'Settings' },
+    ],
+  },
 ]
 
 function Wordmark({ compact }: { compact?: boolean }) {
@@ -46,55 +62,75 @@ function Wordmark({ compact }: { compact?: boolean }) {
   )
 }
 
-function Nav({ clock, openCount, horizontal }: { clock: string; openCount: number; horizontal?: boolean }) {
-  const view = useStore((s) => s.view)
+function NavButton({ id, label, on, horizontal, clock, openCount }: { id: View; label: string; on: boolean; horizontal?: boolean; clock: string; openCount: number }) {
   const setView = useStore((s) => s.setView)
-
   return (
-    <nav
+    <button
+      onClick={() => setView(id)}
+      className="nav-btn"
       style={{
         display: 'flex',
-        flexDirection: horizontal ? 'row' : 'column',
-        gap: horizontal ? 6 : 2,
+        flex: horizontal ? 1 : 'none',
+        alignItems: 'center',
+        justifyContent: horizontal ? 'center' : 'space-between',
+        gap: 8,
+        padding: horizontal ? '8px 6px' : '9px 12px',
+        border: 0,
+        borderRadius: 'var(--r)',
+        textAlign: 'left',
+        fontSize: horizontal ? 12.5 : 14,
+        fontWeight: 500,
+        fontFamily: 'inherit',
+        background: on ? 'var(--hover)' : 'transparent',
+        color: on ? 'var(--fgs)' : 'var(--dim)',
+        boxShadow: on ? (horizontal ? 'inset 0 -2px 0 var(--accent)' : 'inset 2px 0 0 var(--accent)') : 'none',
+        whiteSpace: 'nowrap',
       }}
     >
-      {NAV.map((n) => {
-        const on = view === n.id
-        return (
-          <button
-            key={n.id}
-            onClick={() => setView(n.id)}
-            className="nav-btn"
+      <span>{label}</span>
+      {id === 'focus' && <span style={{ fontFamily: 'var(--fm)', fontSize: horizontal ? 10 : 11, opacity: 0.65 }}>{clock}</span>}
+      {id === 'today' && <span style={{ fontFamily: 'var(--fm)', fontSize: horizontal ? 10 : 11, opacity: 0.65 }}>{openCount}</span>}
+    </button>
+  )
+}
+
+/** Flat horizontal nav — used only for the mobile top bar (Work items). */
+function Nav({ clock, openCount, horizontal }: { clock: string; openCount: number; horizontal?: boolean }) {
+  const view = useStore((s) => s.view)
+  return (
+    <nav style={{ display: 'flex', flexDirection: horizontal ? 'row' : 'column', gap: horizontal ? 6 : 2 }}>
+      {WORK_ITEMS.map((n) => (
+        <NavButton key={n.id} id={n.id} label={n.label} on={view === n.id} horizontal={horizontal} clock={clock} openCount={openCount} />
+      ))}
+    </nav>
+  )
+}
+
+/** Grouped vertical nav with section labels — desktop sidebar body, and the mobile "More" drawer. */
+function GroupedNav({ groups, clock, openCount }: { groups: typeof NAV_GROUPS; clock: string; openCount: number }) {
+  const view = useStore((s) => s.view)
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {groups.map((g) => (
+        <div key={g.label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <div
             style={{
-              display: 'flex',
-              flex: horizontal ? 1 : 'none',
-              alignItems: 'center',
-              justifyContent: horizontal ? 'center' : 'space-between',
-              gap: 8,
-              padding: horizontal ? '8px 6px' : '9px 12px',
-              border: 0,
-              borderRadius: 'var(--r)',
-              textAlign: 'left',
-              fontSize: horizontal ? 12.5 : 14,
-              fontWeight: 500,
-              fontFamily: 'inherit',
-              background: on ? 'var(--hover)' : 'transparent',
-              color: on ? 'var(--fgs)' : 'var(--dim)',
-              boxShadow: on ? (horizontal ? 'inset 0 -2px 0 var(--accent)' : 'inset 2px 0 0 var(--accent)') : 'none',
-              whiteSpace: 'nowrap',
+              fontFamily: 'var(--fm)',
+              fontSize: 9,
+              letterSpacing: '.18em',
+              textTransform: 'uppercase',
+              color: 'var(--faint)',
+              padding: '0 12px 4px',
             }}
           >
-            <span>{n.label}</span>
-            {n.id === 'focus' && (
-              <span style={{ fontFamily: 'var(--fm)', fontSize: horizontal ? 10 : 11, opacity: 0.65 }}>{clock}</span>
-            )}
-            {n.id === 'today' && (
-              <span style={{ fontFamily: 'var(--fm)', fontSize: horizontal ? 10 : 11, opacity: 0.65 }}>{openCount}</span>
-            )}
-          </button>
-        )
-      })}
-    </nav>
+            {g.label}
+          </div>
+          {g.items.map((n) => (
+            <NavButton key={n.id} id={n.id} label={n.label} on={view === n.id} clock={clock} openCount={openCount} />
+          ))}
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -131,26 +167,6 @@ function TodayCard({ todayMinutes, goalMinutes, streak, sessionsToday }: { today
       <div style={{ fontSize: 12, color: 'var(--dim2)' }}>
         {streak}-day streak · {sessionsToday} sessions
       </div>
-    </div>
-  )
-}
-
-function StylePicker() {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-      <div
-        style={{
-          fontFamily: 'var(--fm)',
-          fontSize: 9,
-          letterSpacing: '.18em',
-          textTransform: 'uppercase',
-          color: 'var(--faint)',
-          padding: '0 8px',
-        }}
-      >
-        Style
-      </div>
-      <ThemePicker />
     </div>
   )
 }
@@ -213,13 +229,9 @@ function DesktopSidebar() {
       }}
     >
       <Wordmark />
-      <Nav clock={clock} openCount={openCount} />
+      <GroupedNav groups={NAV_GROUPS} clock={clock} openCount={openCount} />
       <TodayCard todayMinutes={todayMinutes} goalMinutes={goalMinutes} streak={streak} sessionsToday={sessionsToday} />
-      <TimerSettings />
-      <TagManager />
-      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <RemindersToggle />
-        <StylePicker />
+      <div style={{ marginTop: 'auto' }}>
         <LogoutButton />
       </div>
     </aside>
@@ -264,16 +276,7 @@ function MobileSidebar() {
             </div>
           </MobileMenuRow>
           <MobileMenuRow>
-            <TimerSettings />
-          </MobileMenuRow>
-          <MobileMenuRow>
-            <TagManager />
-          </MobileMenuRow>
-          <MobileMenuRow>
-            <RemindersToggle />
-          </MobileMenuRow>
-          <MobileMenuRow>
-            <StylePicker />
+            <GroupedNav groups={NAV_GROUPS.slice(1)} clock={clock} openCount={openCount} />
           </MobileMenuRow>
           <MobileMenuRow>
             <LogoutButton />

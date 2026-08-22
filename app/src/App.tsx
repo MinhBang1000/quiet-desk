@@ -4,10 +4,16 @@ import { BP_MOBILE, useMediaQuery } from './hooks/useMediaQuery'
 import { getThemeBackgroundStyle } from './lib/bgArt'
 import { applyTheme, THEMES } from './lib/themes'
 import { useStore } from './store/useStore'
+import { AssetsView } from './views/AssetsView'
 import { CalendarView } from './views/CalendarView'
 import { FocusView } from './views/FocusView'
+import { ListsView } from './views/ListsView'
+import { PeopleView } from './views/PeopleView'
+import { PlacesView } from './views/PlacesView'
 import { PortfolioEditorView } from './views/PortfolioEditorView'
 import { ProgressView } from './views/ProgressView'
+import { SettingsView } from './views/SettingsView'
+import { ThingsView } from './views/ThingsView'
 import { TodayView } from './views/TodayView'
 
 export default function App() {
@@ -96,7 +102,13 @@ export default function App() {
           {view === 'today' && <TodayView />}
           {view === 'calendar' && <CalendarView />}
           {view === 'stats' && <ProgressView />}
+          {view === 'people' && <PeopleView />}
+          {view === 'things' && <ThingsView />}
+          {view === 'places' && <PlacesView />}
+          {view === 'lists' && <ListsView />}
+          {view === 'assets' && <AssetsView />}
           {view === 'portfolio' && <PortfolioEditorView />}
+          {view === 'settings' && <SettingsView />}
         </main>
       </div>
     </>

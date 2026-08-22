@@ -330,6 +330,12 @@ export function tagColor(theme: Theme, name: string, tags: Tag[]): string {
   return theme.tags[i]
 }
 
+// Categories (People/Things) carry their colorIndex directly, unlike Tags
+// which are looked up by name off a Task — no lookup needed.
+export function categoryColor(theme: Theme, colorIndex: number): string {
+  return theme.tags[colorIndex % theme.tags.length]
+}
+
 export function heatColor(theme: Theme, minutes: number): string {
   const h = theme.heat
   if (!minutes) return h[0]

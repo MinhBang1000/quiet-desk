@@ -50,7 +50,192 @@ db.exec(`
     shareToken TEXT NOT NULL,
     shareEnabled INTEGER NOT NULL DEFAULT 0
   );
+
+  CREATE TABLE IF NOT EXISTS categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    module TEXT NOT NULL,
+    name TEXT NOT NULL,
+    colorIndex INTEGER NOT NULL DEFAULT 0,
+    createdAt TEXT NOT NULL,
+    UNIQUE(module, name)
+  );
+
+  CREATE TABLE IF NOT EXISTS people (
+    id TEXT PRIMARY KEY,
+    fullName TEXT NOT NULL,
+    nickname TEXT NOT NULL DEFAULT '',
+    photoUrl TEXT NOT NULL DEFAULT '',
+    relationship TEXT NOT NULL DEFAULT '',
+    organization TEXT NOT NULL DEFAULT '',
+    position TEXT NOT NULL DEFAULT '',
+    phone TEXT NOT NULL DEFAULT '',
+    email TEXT NOT NULL DEFAULT '',
+    otherContact TEXT NOT NULL DEFAULT '',
+    website TEXT NOT NULL DEFAULT '',
+    birthday TEXT,
+    city TEXT NOT NULL DEFAULT '',
+    country TEXT NOT NULL DEFAULT '',
+    notes TEXT NOT NULL DEFAULT '',
+    interests TEXT NOT NULL DEFAULT '',
+    likes TEXT NOT NULL DEFAULT '',
+    dislikes TEXT NOT NULL DEFAULT '',
+    foodPreferences TEXT NOT NULL DEFAULT '',
+    giftIdeas TEXT NOT NULL DEFAULT '',
+    howWeMet TEXT NOT NULL DEFAULT '',
+    firstMetDate TEXT,
+    lastContactedDate TEXT,
+    favorite INTEGER NOT NULL DEFAULT 0,
+    createdAt TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS person_categories (
+    personId TEXT NOT NULL,
+    categoryId INTEGER NOT NULL,
+    PRIMARY KEY (personId, categoryId)
+  );
+
+  CREATE TABLE IF NOT EXISTS locations (
+    id TEXT PRIMARY KEY,
+    parentId TEXT,
+    name TEXT NOT NULL,
+    createdAt TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS things (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    photoUrl TEXT NOT NULL DEFAULT '',
+    categoryId INTEGER,
+    brand TEXT NOT NULL DEFAULT '',
+    model TEXT NOT NULL DEFAULT '',
+    serialNumber TEXT NOT NULL DEFAULT '',
+    quantity INTEGER NOT NULL DEFAULT 1,
+    notes TEXT NOT NULL DEFAULT '',
+    purchaseDate TEXT,
+    purchaseLocation TEXT NOT NULL DEFAULT '',
+    purchasePrice REAL,
+    currency TEXT NOT NULL DEFAULT 'TWD',
+    warrantyExpires TEXT,
+    attachments TEXT NOT NULL DEFAULT '[]',
+    status TEXT NOT NULL DEFAULT 'owned',
+    locationId TEXT,
+    containerId TEXT,
+    loanPersonId TEXT,
+    loanSince TEXT,
+    loanDue TEXT,
+    createdAt TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS links (
+    id TEXT PRIMARY KEY,
+    fromType TEXT NOT NULL,
+    fromId TEXT NOT NULL,
+    toType TEXT NOT NULL,
+    toId TEXT NOT NULL,
+    relation TEXT NOT NULL DEFAULT 'related',
+    note TEXT NOT NULL DEFAULT '',
+    createdAt TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_links_from ON links(fromType, fromId);
+  CREATE INDEX IF NOT EXISTS idx_links_to ON links(toType, toId);
+
+  CREATE TABLE IF NOT EXISTS places (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    categoryId INTEGER,
+    address TEXT NOT NULL DEFAULT '',
+    mapLink TEXT NOT NULL DEFAULT '',
+    phone TEXT NOT NULL DEFAULT '',
+    website TEXT NOT NULL DEFAULT '',
+    openingHours TEXT NOT NULL DEFAULT '',
+    rating INTEGER,
+    visited INTEGER NOT NULL DEFAULT 0,
+    wantToVisit INTEGER NOT NULL DEFAULT 0,
+    favorite INTEGER NOT NULL DEFAULT 0,
+    notes TEXT NOT NULL DEFAULT '',
+    lastVisitedDate TEXT,
+    visitCount INTEGER NOT NULL DEFAULT 0,
+    city TEXT NOT NULL DEFAULT '',
+    country TEXT NOT NULL DEFAULT '',
+    createdAt TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS place_tags (
+    placeId TEXT NOT NULL,
+    categoryId INTEGER NOT NULL,
+    PRIMARY KEY (placeId, categoryId)
+  );
+
+  CREATE TABLE IF NOT EXISTS collections (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    createdAt TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS collection_places (
+    collectionId TEXT NOT NULL,
+    placeId TEXT NOT NULL,
+    PRIMARY KEY (collectionId, placeId)
+  );
+
+  CREATE TABLE IF NOT EXISTS lists (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    style TEXT NOT NULL DEFAULT 'simple',
+    favorite INTEGER NOT NULL DEFAULT 0,
+    notes TEXT NOT NULL DEFAULT '',
+    createdAt TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS list_items (
+    id TEXT PRIMARY KEY,
+    listId TEXT NOT NULL,
+    text TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    completed INTEGER NOT NULL DEFAULT 0,
+    position INTEGER NOT NULL DEFAULT 0,
+    notes TEXT NOT NULL DEFAULT '',
+    date TEXT,
+    linkType TEXT,
+    linkId TEXT,
+    convertedToType TEXT,
+    convertedToId TEXT,
+    createdAt TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_list_items_listId ON list_items(listId);
+
+  CREATE TABLE IF NOT EXISTS assets (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'TWD',
+    estimatedValue REAL NOT NULL DEFAULT 0,
+    counterpartyPersonId TEXT,
+    details TEXT NOT NULL DEFAULT '{}',
+    notes TEXT NOT NULL DEFAULT '',
+    lastUpdated TEXT NOT NULL,
+    createdAt TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS exchange_rates (
+    currency TEXT PRIMARY KEY,
+    rateToBase REAL NOT NULL,
+    updatedAt TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS asset_snapshots (
+    id TEXT PRIMARY KEY,
+    takenAt TEXT NOT NULL,
+    totalBaseCurrency REAL NOT NULL,
+    baseCurrency TEXT NOT NULL,
+    breakdown TEXT NOT NULL DEFAULT '{}'
+  );
 `);
+
+const settingsColumns = db.prepare('PRAGMA table_info(settings)').all().map((c) => c.name);
+if (!settingsColumns.includes('baseCurrency')) {
+  db.exec("ALTER TABLE settings ADD COLUMN baseCurrency TEXT NOT NULL DEFAULT 'TWD'");
+}
 
 const settingsRow = db.prepare('SELECT * FROM settings WHERE id = 1').get();
 if (!settingsRow) {
